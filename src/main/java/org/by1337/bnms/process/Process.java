@@ -36,22 +36,6 @@ public class Process {
         this.version = version;
     }
 
-//    public static void main(String[] args) throws Exception {
-//        File versionCash = new File("./versionCash");
-//        versionCash.mkdirs();
-//        Version.load(versionCash);
-//        Version version1 = Version.getByName("1.19.4");
-//
-//        File data = new File("./test2/" + version1.getId());
-//        data.mkdirs();
-//        Process process = new Process(
-//                new SystemStreamLog(),
-//                data,
-//                version1
-//        );
-//        process.getPaperMojang();
-//    }
-
     public File getPaperMojang() throws Exception {
         File paper = new File(home, "paper-mojang.jar");
         if (!FileUtil.checkSum(paper)) {

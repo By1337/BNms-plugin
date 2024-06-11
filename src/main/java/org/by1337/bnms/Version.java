@@ -27,14 +27,14 @@ public class Version {
     private static final Map<String, Version> LOOKUP = new LinkedHashMap<>();
     private static String latestRelease;
 
-    public static void initVersions(File cashDir) throws IOException, NoSuchAlgorithmException {
+    public static void initVersions(File cacheDir) throws IOException, NoSuchAlgorithmException {
         JsonObject versionList;
         Gson gson = new Gson();
 
         String json = UrlUtil.parsePage("https://launchermeta.mojang.com/mc/game/version_manifest.json");
         versionList = gson.fromJson(json, JsonObject.class);
 
-        boolean cahLoaded = loadCash(cashDir);
+        boolean cahLoaded = loadCache(cacheDir);
         if (cahLoaded){
             return; // do not update //todo remove it when support for 1.16.5+ is available
         }
@@ -97,10 +97,10 @@ public class Version {
                 System.out.println("Failed to get spigot info! " + t.getMessage());
             }
         }
-        createCash(cashDir);
+        createCache(cacheDir);
     }
 
-    private static boolean loadCash(File dir) throws IOException, NoSuchAlgorithmException {
+    private static boolean loadCache(File dir) throws IOException, NoSuchAlgorithmException {
         // Map<String, Version> LOOKUP
         File file = new File(dir, "version.json");
         if (FileUtil.checkSum(file)) {
@@ -117,7 +117,7 @@ public class Version {
         return false;
     }
 
-    private static void createCash(File dir) throws IOException, NoSuchAlgorithmException {
+    private static void createCache(File dir) throws IOException, NoSuchAlgorithmException {
         File file = new File(dir, "version.json");
         Gson gson = new Gson();
         Files.write(file.toPath(), gson.toJson(LOOKUP).getBytes(StandardCharsets.UTF_8));
@@ -144,9 +144,9 @@ public class Version {
         return index;
     }
 
-    public static void load(File cash) throws IOException, NoSuchAlgorithmException {
-        if (!cash.exists()) cash.mkdirs();
-        initVersions(cash);
+    public static void load(File cache) throws IOException, NoSuchAlgorithmException {
+        if (!cache.exists()) cache.mkdirs();
+        initVersions(cache);
     }
     public static Version getByName(String name){
         for (Version value : LOOKUP.values()) {
@@ -154,14 +154,6 @@ public class Version {
         }
         return null;
     }
-
-    public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
-        File file = new File("./versionCash");
-        file.mkdirs();
-        initVersions(file);
-        System.out.println(Joiner.on("\n").join(LOOKUP.values()));
-    }
-
     public static String getLatestRelease() {
         return latestRelease;
     }

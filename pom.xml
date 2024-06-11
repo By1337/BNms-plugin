@@ -4,7 +4,7 @@
 
     <groupId>org.by1337.bnms</groupId>
     <artifactId>bnms-plugin</artifactId>
-    <version>1.0-beta</version>
+    <version>1.1-beta</version>
     <packaging>maven-plugin</packaging>
 
     <name>bnms-plugin</name>

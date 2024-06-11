@@ -57,23 +57,6 @@ public class LegacyProcess {
         this.version = version;
     }
 
-//    public static void main(String[] args) throws Exception {
-//        File versionCash = new File("./versionCash");
-//        versionCash.mkdirs();
-//        Version.load(versionCash);
-//        Version version1 = Version.getByName("1.15.2");
-//
-//        File data = new File("./test2/" + version1.getId());
-//        data.mkdirs();
-//        LegacyProcess process = new LegacyProcess(
-//                new SystemStreamLog(),
-//                data,
-//                version1
-//        );
-//        process.init();;
-//        process.createRemappedPaper();
-//    }
-
     public void init() throws Exception {
         initFiles();
     }
@@ -89,6 +72,7 @@ public class LegacyProcess {
         applyToMojangMembers();
         return remappedPaperJar;
     }
+
     public File createSpigotToMojang_(File file) throws Exception {
         String javaHome = ProcessUtil.getJavaHome();
         ProcessUtil.executeCommand(home,
@@ -150,6 +134,7 @@ public class LegacyProcess {
         new File(home, "inputSTM-3.jar").delete();
         return new File(home, "resultSTM.jar");
     }
+
     public File createMojang_ToSpigot(File file) throws Exception {
         generateRelocation();
         generateToSpigotMembers();
@@ -212,6 +197,7 @@ public class LegacyProcess {
         new File(home, "inputMTS-3.jar").delete();
         return new File(home, "resultMTS.jar");
     }
+
     private void generateToSpigotMembers() throws Exception {
         toSpigotMembers = new File(home, "toSpigotMembers.csrg");
         if (!FileUtil.checkSum(toSpigotMembers)) {
@@ -223,6 +209,7 @@ public class LegacyProcess {
             FileUtil.createSum(toSpigotMembers);
         }
     }
+
     private void generateRelocation() throws IOException, NoSuchAlgorithmException {
         relocation = new File(home, "relocation.csrg");
         if (!FileUtil.checkSum(relocation)) {
@@ -420,12 +407,12 @@ public class LegacyProcess {
                     );
                     undoRelocateMappings.add(classMapping);
                 } else if (value.name.startsWith("net/minecraft/server/" + packaging + "/")) {
-                    if (!version.getId().equals("1.16.5")){
+                    if (!version.getId().equals("1.16.5")) {
                         String name = splitToNameAndPackage(value.name)[0];
-                        if (name.equals("MinecraftServer") || name.startsWith("MinecraftServer$")){
+                        if (name.equals("MinecraftServer") || name.startsWith("MinecraftServer$")) {
                             String old = name;
                             name = "net/minecraft/server/MinecraftServer";
-                            if (old.contains("$")){
+                            if (old.contains("$")) {
                                 name += "$" + old.split("\\$")[1];
                             }
                         }
@@ -455,11 +442,11 @@ public class LegacyProcess {
                         );
                         undoRelocateMappings.add(classMapping);
                     } else {
-//                        ClassMapping classMapping = new ClassMapping(
-//                                value.name,
-//                                "net/minecraft/server/" + arr[0]
-//                        );
-//                        undoRelocateMappings.add(classMapping);
+                        ClassMapping classMapping = new ClassMapping(
+                                value.name,
+                                "net/minecraft/server/" + arr[0]
+                        );
+                        undoRelocateMappings.add(classMapping);
                     }
                 }
             }

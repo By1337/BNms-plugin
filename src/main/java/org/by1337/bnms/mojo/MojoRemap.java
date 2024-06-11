@@ -30,12 +30,12 @@ public class MojoRemap extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         File m2 = new File(localRepository.getBasedir()).getParentFile();
-        File home = new File(m2, "bnmsCash");
+        File home = new File(m2, "bnmsCache");
         if (!home.exists()) {
             home.mkdirs();
         }
         try {
-            Version.load(new File(home, "versionCash"));
+            Version.load(new File(home, "versionCache"));
             Version v = Version.getByName(version);
             if (v == null) throw new IllegalStateException("Unknown version! " + version);
 

@@ -32,12 +32,12 @@ public class MojoInit extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         File m2 = new File(localRepository.getBasedir()).getParentFile();
-        File home = new File(m2, "bnmsCash");
+        File home = new File(m2, "bnmsCache");
         if (!home.exists()) {
             home.mkdirs();
         }
         try {
-            Version.load(new File(home, "versionCash"));
+            Version.load(new File(home, "versionCache"));
             Version v = Version.getByName(version);
             if (v == null) throw new IllegalStateException("Unknown version! " + version);
 
@@ -53,14 +53,14 @@ public class MojoInit extends AbstractMojo {
                         artifactInstaller,
                         getLog()
                 );
-                File tempCash = new File(home, UUID.randomUUID().toString().replace("-", ""));
-                tempCash.mkdirs();
+                File tempCache = new File(home, UUID.randomUUID().toString().replace("-", ""));
+                tempCache.mkdirs();
                 util.installToMavenRepo(
                         version,
                         legacyProcess.createRemappedPaper().toPath(),
-                        tempCash.toPath().resolve("pom.xml")
+                        tempCache.toPath().resolve("pom.xml")
                 );
-                FileUtil.deleteDirectory(tempCash);
+                FileUtil.deleteDirectory(tempCache);
             }
 
         } catch (Exception e) {
