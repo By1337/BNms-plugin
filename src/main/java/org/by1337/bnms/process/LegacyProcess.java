@@ -455,7 +455,6 @@ public class LegacyProcess {
             FileUtil.createSum(this.undoRelocate);
         }
     }
-
     private void convertProGuardToCsrg() throws Exception {
         toObfClass = new File(home, "toObfClass.csrg");
         toObfMembers = new File(home, "toObfMembers.csrg");

@@ -11,6 +11,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -34,14 +35,27 @@ public class ProGuardToCsrgMap {
 
         Set<Mapping> toAdd = new HashSet<>();
 
+        Map<String, String> classMappingMojangToObf = new HashMap<>();
+        Map<String, String> classMappingObfToMojang = new HashMap<>();
         for (Mapping mapping : mappings) {
+            if (mapping instanceof ClassMapping){
+                ClassMapping classMapping1 = (ClassMapping) mapping;
+                classMappingMojangToObf.put(classMapping1.getOldName(), classMapping1.getNewName());
+                classMappingObfToMojang.put(classMapping1.getNewName(), classMapping1.getOldName());
+            }
+        }
+        for (Mapping mapping : mappings) {
+
             if (mapping instanceof MethodMapping) {
                 MethodMapping method = (MethodMapping) mapping;
-                for (ClassNode classNode : classHierarchy.getHierarchy().getOrDefault(method.getOwner(), Collections.emptySet())) {
+                String name = classMappingMojangToObf.get(method.getOwner());
+                if (name == null) continue;
+                for (ClassNode classNode : classHierarchy.getHierarchy().getOrDefault(name, Collections.emptySet())) { // todo ignore private methods?
+                    String cl = classMappingObfToMojang.getOrDefault(classNode.name, classNode.name);
                     MethodMapping mapping1 = new MethodMapping(
                             method.getOldName(),
                             method.getNewName(),
-                            classNode.name,
+                            cl,
                             method.getDesc()
                     );
 
@@ -49,11 +63,14 @@ public class ProGuardToCsrgMap {
                 }
             } else if (mapping instanceof FieldMapping) {
                 FieldMapping fieldMapping = (FieldMapping) mapping;
-                for (ClassNode classNode : classHierarchy.getHierarchy().getOrDefault(fieldMapping.getOwner(), Collections.emptySet())) {
+                String name = classMappingMojangToObf.get(fieldMapping.getOwner());
+                if (name == null) continue;
+                for (ClassNode classNode : classHierarchy.getHierarchy().getOrDefault(name, Collections.emptySet())) {
+                    String cl = classMappingObfToMojang.getOrDefault(classNode.name, classNode.name);
                     FieldMapping mapping1 = new FieldMapping(
                             fieldMapping.getOldName(),
                             fieldMapping.getNewName(),
-                            classNode.name
+                            cl
                     );
 
                     toAdd.add(mapping1);
