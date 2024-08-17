@@ -7,7 +7,6 @@ public class MethodMapping implements Mapping {
     private String newName;
     private String owner;
     private String desc;
-
     public MethodMapping(String oldName, String newName, String owner, String desc) {
         this.oldName = oldName;
         this.newName = newName;

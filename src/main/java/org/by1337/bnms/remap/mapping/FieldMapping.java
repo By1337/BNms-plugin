@@ -6,7 +6,6 @@ public class FieldMapping implements Mapping {
     private String oldName;
     private String newName;
     private String ownerName;
-
     public FieldMapping(String oldName, String newName, String ownerName) {
         this.oldName = oldName;
         this.newName = newName;

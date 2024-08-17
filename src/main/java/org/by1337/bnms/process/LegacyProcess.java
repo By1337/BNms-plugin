@@ -500,7 +500,7 @@ public class LegacyProcess {
 
     private String[] splitToNameAndPackage(String s) {
         String[] arr = s.split("/");
-        String name = arr[arr.length - 1]; // Matrix3f
+        String name = arr[arr.length - 1];
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < arr.length - 1; i++) {
             sb.append(arr[i]).append("/");

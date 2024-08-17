@@ -16,6 +16,7 @@ import org.by1337.bnms.util.maven.MavenRepositoryUtil;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Mojo(name = "remap", defaultPhase = LifecyclePhase.PACKAGE)
@@ -50,8 +51,8 @@ public class MojoRemap extends AbstractMojo {
 
                 File out = legacyProcess.createMojang_ToSpigot(input);
 
-                Files.move(input.toPath(), new File(input.getParent(), input.getName() + "-mojang.jar").toPath());
-                Files.move(out.toPath(), input.toPath());
+                Files.move(input.toPath(), new File(input.getParent(), input.getName() + "-mojang.jar").toPath(), StandardCopyOption.REPLACE_EXISTING);
+                Files.move(out.toPath(), input.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
 
         } catch (Exception e) {

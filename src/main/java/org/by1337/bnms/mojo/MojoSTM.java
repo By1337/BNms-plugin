@@ -13,6 +13,7 @@ import org.by1337.bnms.process.LegacyProcess;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 @Mojo(name = "spigot-to-mojang", defaultPhase = LifecyclePhase.PACKAGE)
 public class MojoSTM extends AbstractMojo {
@@ -49,7 +50,7 @@ public class MojoSTM extends AbstractMojo {
                 if (build.exists()){
                     File out = legacyProcess.createSpigotToMojang_(build);
 
-                    Files.move(out.toPath(), new File(target, build.getName() + "-mojang.jar").toPath());
+                    Files.move(out.toPath(), new File(target, build.getName() + "-mojang.jar").toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }else {
                     getLog().error("Failed to get last build file!");
                 }
