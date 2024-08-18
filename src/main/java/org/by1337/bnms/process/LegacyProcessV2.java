@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,7 @@ public class LegacyProcessV2 {
 
     public static void main(String[] args) throws Exception {
         File home = new File("./TEST");
+
         home.mkdirs();
         File versionCacheDir = new File(home, "versionCacheDir");
         versionCacheDir.mkdirs();
@@ -53,20 +55,21 @@ public class LegacyProcessV2 {
                 work,
                 version1
         );
+
         delete(new File(work, "toObfClass.csrg"));
         delete(new File(work, "toObfMembers.csrg"));
         delete(new File(work, "undoRelocate.csrg"));
         delete(new File(work, "unrelocatedPaper.jar"));
         delete(new File(work, "paper-remapped.jar"));
-        delete(new File(work, "bukkit-1.16.5-cl.csrg.undo.csrg"));
-        delete(new File(work, "bukkit-1.16.5-members.csrg.undo.csrg"));
+        delete(new File(work, "bukkit-" + version1.getId() + "-cl.csrg.undo.csrg"));
+        delete(new File(work, "bukkit-" + version1.getId() + "-members.csrg.undo.csrg"));
         delete(new File(work, "paper-mojang-cl.jar"));
         delete(new File(work, "paper-obf.jar"));
         delete(new File(work, "paper-obf-members.jar"));
         delete(new File(work, "toMojangClass.csrg"));
         delete(new File(work, "toMojangMembers.csrg"));
         delete(new File(work, "toMojangMembers.csrg.fixed.csrg"));
-        delete(new File(work, "bukkit-1.16.5-cl.csrg"));
+        delete(new File(work, "bukkit-" + version1.getId() + "-cl.csrg"));
         for (File file : work.listFiles()) {
             if (file.getName().endsWith(".sha1")) {
                 File f = new File(work, file.getName().replace(".sha1", ""));
@@ -74,12 +77,138 @@ public class LegacyProcessV2 {
             }
         }
         processV2.getPaperRemapped();
-        // processV2.getPaperObfMembers();
-        // System.out.println(processV2.getPaperObf());
-        // processV2.getBukkitMembersUndo();
 
-        // processV2.getMojangMappings();
+      //  File remap = new File(home, "remap");
+      //  work.mkdirs();
+      //  processV2.remapFromBukkitToMojang(new File(remap, "V1_16_5-1.2.jar"), remap);
+      //  processV2.remapFromMojangToBukkit(new File(remap, "V1_16_5-1.2.jar-mojang.jar"), remap);
     }
+
+    public File remapFromMojangToBukkit(File input, File wordDir) throws Exception {
+        String javaHome = ProcessUtil.getJavaHome();
+        ProcessUtil.executeCommand(wordDir,
+                new String[]{
+                        javaHome,
+                        "-jar",
+                        getSpecialSource().getCanonicalPath(),
+                        "-i",
+                        input.getCanonicalPath(),
+                        "-m",
+                        getUndoToMojangMembersFixed().getCanonicalPath(),
+                        "-o",
+                        input.getName() + "-obf-members.jar"
+                },
+                () -> log.info("remap to obf members")
+        );
+        ProcessUtil.executeCommand(wordDir,
+                new String[]{
+                        javaHome,
+                        "-jar",
+                        getSpecialSource().getCanonicalPath(),
+                        "-i",
+                        input.getName() + "-obf-members.jar",
+                        "-m",
+                        getMojangMappings().toObfClass.getCanonicalPath(),
+                        "-o",
+                        input.getName() + "-obf.jar"
+                },
+                () -> log.info("remap to obf")
+        );
+        new File(wordDir, input.getName() + "-obf-members.jar").delete();
+        ProcessUtil.executeCommand(wordDir,
+                new String[]{
+                        javaHome,
+                        "-jar",
+                        getSpecialSource().getCanonicalPath(),
+                        "-i",
+                        input.getName() + "-obf.jar",
+                        "-m",
+                        getBukkitCl().getCanonicalPath(),
+                        "-o",
+                        input.getName() + "-bukkit-cl.jar"
+                },
+                () -> log.info("remap to bukkit classes")
+        );
+        ProcessUtil.executeCommand(wordDir,
+                new String[]{
+                        javaHome,
+                        "-jar",
+                        getSpecialSource().getCanonicalPath(),
+                        "-i",
+                        input.getName() + "-bukkit-cl.jar",
+                        "-m",
+                        getRelocateMappings().getCanonicalPath(),
+                        "-o",
+                        input.getName() + "-bukkit-mappings.jar"
+                },
+                () -> log.info("relocate classes")
+        );
+        new File(wordDir, input.getName() + "-bukkit-cl.jar").delete();
+        return new File(wordDir, input.getName() + "-bukkit-mappings.jar");
+    }
+    public File remapFromBukkitToMojang(File input, File wordDir) throws Exception {
+        String javaHome = ProcessUtil.getJavaHome();
+        ProcessUtil.executeCommand(wordDir,
+                new String[]{
+                        javaHome,
+                        "-jar",
+                        getSpecialSource().getCanonicalPath(),
+                        "-i",
+                        input.getCanonicalPath(),
+                        "-m",
+                        getUndoRelocateMappings().getCanonicalPath(),
+                        "-o",
+                        input.getName() + "-unrelocated.jar"
+                },
+                () -> log.info("undo relocate")
+        );
+        ProcessUtil.executeCommand(wordDir,
+                new String[]{
+                        javaHome,
+                        "-jar",
+                        getSpecialSource().getCanonicalPath(),
+                        "-i",
+                        input.getName() + "-unrelocated.jar",
+                        "-m",
+                        getBukkitClUndoMappings().getCanonicalPath(),
+                        "-o",
+                        input.getName() + "-obf.jar"
+                },
+                () -> log.info("remap to obf")
+        );
+        new File(wordDir, input.getName() + "-unrelocated.jar").delete();
+        ProcessUtil.executeCommand(wordDir,
+                new String[]{
+                        javaHome,
+                        "-jar",
+                        getSpecialSource().getCanonicalPath(),
+                        "-i",
+                        input.getName() + "-obf.jar",
+                        "-m",
+                        getMojangMappings().toMojangClass.getCanonicalPath(),
+                        "-o",
+                        input.getName() + "-mojang-cl.jar"
+                },
+                () -> log.info("remap to mojang classes")
+        );
+        ProcessUtil.executeCommand(wordDir,
+                new String[]{
+                        javaHome,
+                        "-jar",
+                        getSpecialSource().getCanonicalPath(),
+                        "-i",
+                        input.getName() + "-mojang-cl.jar",
+                        "-m",
+                        getToMojangMembersFixed().getCanonicalPath(),
+                        "-o",
+                        input.getName() + "-mojang.jar"
+                },
+                () -> log.info("final remap")
+        );
+        new File(wordDir, input.getName() + "-mojang-cl.jar").delete();
+        return new File(wordDir, input.getName() + "-mojang.jar");
+    }
+
 
     private static void delete(File file) {
         if (file.exists()) {
@@ -87,7 +216,7 @@ public class LegacyProcessV2 {
         }
     }
 
-    private File getPaperRemapped() throws Exception {
+    public File getPaperRemapped() throws Exception {
         File file = new File(home, "paper-remapped.jar");
         if (!FileUtil.checkSum(file)) {
             String javaHome = ProcessUtil.getJavaHome();
@@ -99,7 +228,7 @@ public class LegacyProcessV2 {
                             "-i",
                             getPaperMojangClasses().getName(),
                             "-m",
-                            getToMojangMembersFixed(getPaperMojangClasses()).getName(),
+                            getToMojangMembersFixed().getName(),
                             "-o",
                             file.getName()
                     },
@@ -133,12 +262,22 @@ public class LegacyProcessV2 {
         return file;
     }
 
-    private File getToMojangMembersFixed(File input) throws Exception {
+    private File getUndoToMojangMembersFixed() throws Exception {
+        File file = new File(home, "toMojangMembers.csrg.fixed.csrg.undo.csrg");
+        if (!FileUtil.checkSum(file)) {
+            List<Mapping> mappings = CsrgUtil.read(getToMojangMembersFixed());
+            mappings.forEach(Mapping::reverse);
+            saveMappings(mappings, file);
+            FileUtil.createSum(file);
+        }
+        return file;
+    }
+    private File getToMojangMembersFixed() throws Exception {
         File file = new File(home, "toMojangMembers.csrg.fixed.csrg");
         if (!FileUtil.checkSum(file)) {
             int count = 0;
             List<Mapping> mappings = CsrgUtil.read(getMojangMappings().toMojangMembers);
-            JarInput jarInput = new JarInput(input);
+            JarInput jarInput = new JarInput(getPaperMojangClasses());
             List<LibLoader> libs = new ArrayList<>();
             libs.add(jarInput);
             libs.add(new RuntimeLibLoader());
@@ -158,6 +297,7 @@ public class LegacyProcessV2 {
         }
         return file;
     }
+
     private boolean hasConflict(JarInput jarInput, Mapping mapping) {
         ClassNode classNode = jarInput.getClass(mapping.getOwner());
         if (classNode != null) {
@@ -203,6 +343,7 @@ public class LegacyProcessV2 {
     private MethodNode getMethod(MethodMapping methodMapping, ClassNode classNode) {
         return getMethod(methodMapping.getNewName(), methodMapping.getDesc(), classNode);
     }
+
     private MethodNode getMethod(String name, String desc, ClassNode classNode) {
         if (classNode.methods == null) return null;
         for (MethodNode method : classNode.methods) {
@@ -224,7 +365,7 @@ public class LegacyProcessV2 {
                             "-i",
                             getUnrelocatedPaper().getName(),
                             "-m",
-                            getBukkitClUndo().getName(),
+                            getBukkitClUndoMappings().getName(),
                             "-o",
                             file.getName()
                     },
@@ -235,8 +376,8 @@ public class LegacyProcessV2 {
         return file;
     }
 
-    private File getBukkitClUndo() throws Exception {
-        File file = new File(home, "bukkit-1.16.5-cl.csrg.undo.csrg");
+    private File getBukkitClUndoMappings() throws Exception {
+        File file = new File(home, "bukkit-" + version.getId() + "-cl.csrg.undo.csrg");
         if (!FileUtil.checkSum(file)) {
             List<Mapping> mappings = CsrgUtil.read(getBukkitCl());
             mappings.forEach(Mapping::reverse);
@@ -245,7 +386,6 @@ public class LegacyProcessV2 {
         }
         return file;
     }
-
 
 
     private File getUnrelocatedPaper() throws Exception {
@@ -266,6 +406,17 @@ public class LegacyProcessV2 {
                     },
                     () -> log.info("undo relocate classes")
             );
+            FileUtil.createSum(file);
+        }
+        return file;
+    }
+
+    private File getRelocateMappings() throws Exception {
+        File file = new File(home, "relocate.csrg");
+        if (!FileUtil.checkSum(file)) {
+            List<Mapping> mappings = CsrgUtil.read(getUndoRelocateMappings());
+            mappings.forEach(Mapping::reverse);
+            saveMappings(mappings, file);
             FileUtil.createSum(file);
         }
         return file;
@@ -415,7 +566,7 @@ public class LegacyProcessV2 {
     }
 
     private File getBukkitMembers() throws Exception {
-        File file = new File(home, "bukkit-1.16.5-members.csrg");
+        File file = new File(home, "bukkit-" + version.getId() + "-members.csrg");
         if (!FileUtil.checkSum(file)) {
             FileUtil.downloadFile(version.getBukkitMembersUrl(), file);
         }
@@ -423,7 +574,7 @@ public class LegacyProcessV2 {
     }
 
     private File getBukkitCl() throws Exception {
-        File file = new File(home, "bukkit-1.16.5-cl.csrg");
+        File file = new File(home, "bukkit-" + version.getId() + "-cl.csrg");
         if (!FileUtil.checkSum(file)) {
             FileUtil.downloadFile(version.getBukkitClUrl(), file);
         }

@@ -4,33 +4,36 @@ import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.installer.ArtifactInstaller;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.by1337.bnms.Version;
-import org.by1337.bnms.process.LegacyProcess;
+import org.by1337.bnms.process.LegacyProcessV2;
 import org.by1337.bnms.util.FileUtil;
+import org.by1337.bnms.util.SharedConstants;
 import org.by1337.bnms.util.maven.MavenRepositoryUtil;
 
 import java.io.File;
 import java.util.UUID;
 
 @Mojo(name = "init", defaultPhase = LifecyclePhase.PACKAGE)
+
 public class MojoInit extends AbstractMojo {
     @Parameter(property = "version", required = true)
     String version;
     @Parameter(defaultValue = "${localRepository}", readonly = true, required = true)
+    @SuppressWarnings("deprecation")
     ArtifactRepository localRepository;
     @Component
+    @SuppressWarnings("deprecation")
     ArtifactFactory artifactFactory;
     @Component
     ArtifactInstaller artifactInstaller;
 
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    public void execute() {
+        SharedConstants.LOGGER = getLog();
         File m2 = new File(localRepository.getBasedir()).getParentFile();
         File home = new File(m2, "bnmsCache");
         if (!home.exists()) {
@@ -45,8 +48,9 @@ public class MojoInit extends AbstractMojo {
                 File versionHome = new File(home, version);
                 versionHome.mkdirs();
 
-                LegacyProcess legacyProcess = new LegacyProcess(getLog(), versionHome, v);
-                legacyProcess.init();
+
+                LegacyProcessV2 legacyProcessV2 = new LegacyProcessV2(getLog(), versionHome, v);
+
                 MavenRepositoryUtil util = new MavenRepositoryUtil(
                         localRepository,
                         artifactFactory,
@@ -57,7 +61,7 @@ public class MojoInit extends AbstractMojo {
                 tempCache.mkdirs();
                 util.installToMavenRepo(
                         version,
-                        legacyProcess.createRemappedPaper().toPath(),
+                        legacyProcessV2.getPaperRemapped().toPath(),
                         tempCache.toPath().resolve("pom.xml")
                 );
                 FileUtil.deleteDirectory(tempCache);

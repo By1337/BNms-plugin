@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 public class ProcessUtil {
     public static void executeCommand(File directory, String[] command) {
@@ -28,7 +29,7 @@ public class ProcessUtil {
             int exitCode = process.waitFor();
 
         } catch (Exception e) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(e);
         }
     }
     public static String getJavaHome(){

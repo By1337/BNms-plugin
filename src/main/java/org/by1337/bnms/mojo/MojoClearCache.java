@@ -2,12 +2,11 @@ package org.by1337.bnms.mojo;
 
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.by1337.bnms.util.FileUtil;
+import org.by1337.bnms.util.SharedConstants;
 
 import java.io.File;
 
@@ -19,7 +18,8 @@ public class MojoClearCache extends AbstractMojo {
     ArtifactRepository localRepository;
 
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    public void execute() {
+        SharedConstants.LOGGER = getLog();
         File m2 = new File(localRepository.getBasedir()).getParentFile();
         File home = new File(m2, "bnmsCache");
         if (!home.exists()) {

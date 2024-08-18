@@ -1,21 +1,6 @@
 # Bnms-plugin
 
-This plugin adds support for Paper NMS using Mojang mappings for versions 1.16.5 and below. Since versions 1.16.5 and below were developed using Bukkit mappings, many conflicts arose.
-
-## Mapping Issues
-
-Example of a conflict:
-```java
-public SectionPosition getPlayerMapSection() { return this.O(); } // Paper - OBFHELPER
-public SectionPosition O() { return this.cj; }
-```
-
-If the method `O` has the original name `getPlayerMapSection`, a conflict arises due to identical names. To resolve this issue, an `_` is added to the original names.
-
-Example:
-![mappingExample.png](img%2FmappingExample.png)
-
-This plugin is experimental, so errors are possible. Please report them in issues.
+This plugin adds support for Paper NMS using Mojang mappings for versions 1.16.5 and below.
 
 ## Version Support
 
@@ -51,7 +36,7 @@ First, add this plugin to your `pom.xml`:
             <plugin>
                 <groupId>org.by1337.bnms</groupId>
                 <artifactId>bnms-plugin</artifactId>
-                <version>1.2-beta</version>
+                <version>1.3</version>
                 <configuration>
                     <version>1.16.5</version>
                 </configuration>
