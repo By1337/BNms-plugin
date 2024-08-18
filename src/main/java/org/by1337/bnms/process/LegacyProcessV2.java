@@ -9,18 +9,20 @@ import org.by1337.bnms.remap.JarInput;
 import org.by1337.bnms.remap.LibLoader;
 import org.by1337.bnms.remap.RuntimeLibLoader;
 import org.by1337.bnms.remap.mapping.ClassMapping;
+import org.by1337.bnms.remap.mapping.FieldMapping;
 import org.by1337.bnms.remap.mapping.Mapping;
+import org.by1337.bnms.remap.mapping.MethodMapping;
 import org.by1337.bnms.util.*;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class LegacyProcessV2 {
@@ -60,22 +62,27 @@ public class LegacyProcessV2 {
         delete(new File(work, "bukkit-1.16.5-members.csrg.undo.csrg"));
         delete(new File(work, "paper-mojang-cl.jar"));
         delete(new File(work, "paper-obf.jar"));
-        delete(new File(work, "paper-obf-cl.jar"));
+        delete(new File(work, "paper-obf-members.jar"));
         delete(new File(work, "toMojangClass.csrg"));
         delete(new File(work, "toMojangMembers.csrg"));
         delete(new File(work, "toMojangMembers.csrg.fixed.csrg"));
+        delete(new File(work, "bukkit-1.16.5-cl.csrg"));
         for (File file : work.listFiles()) {
-            if (file.getName().endsWith(".sha1")){
+            if (file.getName().endsWith(".sha1")) {
                 File f = new File(work, file.getName().replace(".sha1", ""));
                 if (!f.exists()) delete(file);
             }
         }
-
         processV2.getPaperRemapped();
-       // processV2.getMojangMappings();
+        // processV2.getPaperObfMembers();
+        // System.out.println(processV2.getPaperObf());
+        // processV2.getBukkitMembersUndo();
+
+        // processV2.getMojangMappings();
     }
-    private static void delete(File file){
-        if (file.exists()){
+
+    private static void delete(File file) {
+        if (file.exists()) {
             file.delete();
         }
     }
@@ -92,7 +99,7 @@ public class LegacyProcessV2 {
                             "-i",
                             getPaperMojangClasses().getName(),
                             "-m",
-                            getToMojangMembersFixed().getName(),
+                            getToMojangMembersFixed(getPaperMojangClasses()).getName(),
                             "-o",
                             file.getName()
                     }
@@ -101,6 +108,7 @@ public class LegacyProcessV2 {
         }
         return file;
     }
+
     private File getPaperMojangClasses() throws Exception {
         File file = new File(home, "paper-mojang-cl.jar");
         if (!FileUtil.checkSum(file)) {
@@ -123,46 +131,85 @@ public class LegacyProcessV2 {
         return file;
     }
 
-    private File getToMojangMembersFixed() throws Exception {
+    private File getToMojangMembersFixed(File input) throws Exception {
         File file = new File(home, "toMojangMembers.csrg.fixed.csrg");
         if (!FileUtil.checkSum(file)) {
             List<Mapping> mappings = CsrgUtil.read(getMojangMappings().toMojangMembers);
+            JarInput jarInput = new JarInput(input);
+            List<LibLoader> libs = new ArrayList<>();
+            libs.add(jarInput);
+            libs.add(new RuntimeLibLoader());
+            jarInput.buildClassHierarchy(libs);
+
             mappings.removeIf(m -> m instanceof ClassMapping);
             for (Mapping mapping : mappings) {
                 if (mapping.getOldName().equals(mapping.getNewName())) continue;
-                mapping.setNewName(mapping.getNewName() + "_");
+                if (hasConflict(jarInput, mapping)) {
+                    mapping.setNewName(mapping.getNewName() + "_");
+                    System.out.println("Fixed " + mapping);
+                }
             }
             saveMappings(mappings, file);
             FileUtil.createSum(file);
         }
         return file;
     }
-
-    private File getPaperObf() throws Exception {
-        // todo
-        File file = new File(home, "paper-obf.jar");
-        if (!FileUtil.checkSum(file)) {
-            String javaHome = ProcessUtil.getJavaHome();
-            ProcessUtil.executeCommand(home,
-                    new String[]{
-                            javaHome,
-                            "-jar",
-                            getSpecialSource().getName(),
-                            "-i",
-                            getPaperObfCl().getName(),
-                            "-m",
-                            getBukkitMembersUndo().getName(),
-                            "-o",
-                            file.getName()
+    private boolean hasConflict(JarInput jarInput, Mapping mapping) {
+        ClassNode classNode = jarInput.getClass(mapping.getOwner());
+        if (classNode != null) {
+            if (mapping instanceof MethodMapping) {
+                MethodMapping methodMapping = (MethodMapping) mapping;
+                if (getMethod(methodMapping, classNode) != null) {
+                    return true;
+                }
+            } else if (mapping instanceof FieldMapping) {
+                FieldMapping fieldMapping = (FieldMapping) mapping;
+                if (getField(fieldMapping.getNewName(), classNode) != null) {
+                    return true;
+                }
+            }
+            Set<ClassNode> superClasses = jarInput.getHierarchy().getHierarchyParent().getOrDefault(classNode.name, Collections.emptySet());
+            for (ClassNode superClass : superClasses) {
+                if (mapping instanceof MethodMapping) {
+                    MethodMapping methodMapping = (MethodMapping) mapping;
+                    if (getMethod(methodMapping, superClass) != null) {
+                        return true;
                     }
-            );
-            FileUtil.createSum(file);
+                } else if (mapping instanceof FieldMapping) {
+                    FieldMapping fieldMapping = (FieldMapping) mapping;
+                    if (getField(fieldMapping.getNewName(), superClass) != null) {
+                        return true;
+                    }
+                }
+            }
         }
-        return file;
+        return false;
+    }
+
+    @Nullable
+    private FieldNode getField(String name, ClassNode classNode) {
+        if (classNode.fields == null) return null;
+        for (FieldNode field : classNode.fields) {
+            if (field.name.equals(name)) return field;
+        }
+        return null;
+    }
+
+    @Nullable
+    private MethodNode getMethod(MethodMapping methodMapping, ClassNode classNode) {
+        return getMethod(methodMapping.getNewName(), methodMapping.getDesc(), classNode);
+    }
+    private MethodNode getMethod(String name, String desc, ClassNode classNode) {
+        if (classNode.methods == null) return null;
+        for (MethodNode method : classNode.methods) {
+            if (method.name.equals(name) && method.desc.equals(desc))
+                return method;
+        }
+        return null;
     }
 
     private File getPaperObfCl() throws Exception {
-        File file = new File(home, "paper-obf-cl.jar");
+        File file = new File(home, "paper-obf.jar");
         if (!FileUtil.checkSum(file)) {
             String javaHome = ProcessUtil.getJavaHome();
             ProcessUtil.executeCommand(home,
@@ -194,16 +241,7 @@ public class LegacyProcessV2 {
         return file;
     }
 
-    private File getBukkitMembersUndo() throws Exception {
-        File file = new File(home, "bukkit-1.16.5-members.csrg.undo.csrg");
-        if (!FileUtil.checkSum(file)) {
-            List<Mapping> mappings = CsrgUtil.read(getBukkitMembers());
-            mappings.forEach(Mapping::reverse);
-            saveMappings(mappings, file);
-            FileUtil.createSum(file);
-        }
-        return file;
-    }
+
 
     private File getUnrelocatedPaper() throws Exception {
         File file = new File(home, "unrelocatedPaper.jar");
