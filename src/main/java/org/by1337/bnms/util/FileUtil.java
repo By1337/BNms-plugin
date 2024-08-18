@@ -1,8 +1,5 @@
 package org.by1337.bnms.util;
 
-import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugin.logging.SystemStreamLog;
-
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
@@ -16,15 +13,14 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public class FileUtil {
-    private static final Log LOGGER = new SystemStreamLog();
     public static File downloadFile(String fileURL, File saveFilePath) throws Exception {
-        LOGGER.info("download " + saveFilePath.getName());
+        SharedConstants.LOGGER.info("Downloading " + saveFilePath.getName());
         if (saveFilePath.exists()) {
             if (checkSum(saveFilePath)) {
-                LOGGER.info("skipped " + saveFilePath.getName());
+                SharedConstants.LOGGER.info("skipped " + saveFilePath.getName());
                 return saveFilePath;
             } else {
-                LOGGER.info("re-downloading " + saveFilePath.getName());
+                SharedConstants.LOGGER.info("re-downloading " + saveFilePath.getName());
             }
         }
         URL url = new URL(fileURL);

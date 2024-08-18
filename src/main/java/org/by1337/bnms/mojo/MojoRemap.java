@@ -10,14 +10,11 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.by1337.bnms.Version;
 import org.by1337.bnms.process.LegacyProcess;
-import org.by1337.bnms.util.FileUtil;
-import org.by1337.bnms.util.maven.MavenRepositoryUtil;
+import org.by1337.bnms.util.SharedConstants;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.UUID;
 
 @Mojo(name = "remap", defaultPhase = LifecyclePhase.PACKAGE)
 public class MojoRemap extends AbstractMojo {
@@ -30,6 +27,7 @@ public class MojoRemap extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        SharedConstants.LOGGER = getLog();
         File m2 = new File(localRepository.getBasedir()).getParentFile();
         File home = new File(m2, "bnmsCache");
         if (!home.exists()) {
@@ -43,6 +41,7 @@ public class MojoRemap extends AbstractMojo {
             if (v.getIndex() >= Version.getByName("1.16.5").getIndex()) {
                 File versionHome = new File(home, version);
                 versionHome.mkdirs();
+
 
                 LegacyProcess legacyProcess = new LegacyProcess(getLog(), versionHome, v);
                 legacyProcess.init();

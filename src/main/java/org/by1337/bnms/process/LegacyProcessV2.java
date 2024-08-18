@@ -42,11 +42,11 @@ public class LegacyProcessV2 {
         home.mkdirs();
         File versionCacheDir = new File(home, "versionCacheDir");
         versionCacheDir.mkdirs();
-        File work = new File(home, "work1.14.4");
+        File work = new File(home, "work");
         work.mkdirs();
         Version.load(versionCacheDir);
 
-        Version version1 = Version.getByName("1.14.4");
+        Version version1 = Version.getByName("1.16.5");
 
         LegacyProcessV2 processV2 = new LegacyProcessV2(
                 new SystemStreamLog(),

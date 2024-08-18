@@ -1,13 +1,11 @@
 package org.by1337.bnms.remap;
 
-import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugin.logging.SystemStreamLog;
+import org.by1337.bnms.util.SharedConstants;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.*;
 
 public class ClassHierarchy {
-    private static final Log LOGGER = new SystemStreamLog();
     private final Map<String, Set<ClassNode>> hierarchy = new HashMap<>();
     private final Map<String, Set<ClassNode>> hierarchyParent = new HashMap<>();
     private final JarInput jarInput;
@@ -77,7 +75,7 @@ public class ClassHierarchy {
             if (node != null) return node;
         }
         if (!seenMissingClass.contains(clazz)) {
-            LOGGER.info("Missing class " + clazz);
+            SharedConstants.LOGGER.info("Missing class " + clazz);
             seenMissingClass.add(clazz);
         }
         return null;

@@ -4,9 +4,8 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.by1337.bnms.util.FileUtil;
+import org.by1337.bnms.util.SharedConstants;
 import org.by1337.bnms.util.UrlUtil;
 
 import java.io.File;
@@ -20,7 +19,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Version {
-    private static final Log LOGGER = new SystemStreamLog();
     public static final String PAPER_SERVER = "https://api.papermc.io/v2/projects/paper/versions/{}/builds/{1}/downloads/paper-{}-{1}.jar";
     public static final String PAPER_BUILD_INFO = "https://api.papermc.io/v2/projects/paper/versions/";
     public static final String SPIGOT_VERSION_INFO = "https://hub.spigotmc.org/versions/";
@@ -96,7 +94,7 @@ public class Version {
                 x++;
 
             } catch (Throwable t) {
-                LOGGER.warn("Failed to get spigot info! " + t.getMessage());
+                SharedConstants.LOGGER.warn("Failed to get spigot info! " + t.getMessage());
             }
         }
         createCache(cacheDir);
