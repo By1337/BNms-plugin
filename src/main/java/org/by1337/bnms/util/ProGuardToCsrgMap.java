@@ -1,6 +1,8 @@
 package org.by1337.bnms.util;
 
 import com.google.common.base.Joiner;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.by1337.bnms.remap.ClassHierarchy;
 import org.by1337.bnms.remap.JarInput;
 import org.by1337.bnms.remap.mapping.ClassMapping;
@@ -23,8 +25,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class ProGuardToCsrgMap {
+    private static final Log LOGGER = new SystemStreamLog();
+    private static final Set<String> seenUnknownClass = new HashSet<>();
+
     public static List<Mapping> readProGuard(File mappings, JarInput input) throws IOException {
-        System.out.println("read pro guard mappings");
+        LOGGER.info("read pro guard mappings");
         List<Mapping> result = toCsrg(Files.readAllLines(mappings.toPath()).iterator());
         Set<Mapping> toAdd = generateMissingMappings(input, result);
         result.addAll(toAdd);
@@ -42,7 +47,7 @@ public class ProGuardToCsrgMap {
     }
 
     private static String applyMappingsToType(String type, Map<String, String> mapping) {
-        if (type.startsWith("[")){
+        if (type.startsWith("[")) {
             return "[" + applyMappingsToType(type.substring(1), mapping);
         }
         if (type.startsWith("L") && type.endsWith(";")) {
@@ -54,7 +59,7 @@ public class ProGuardToCsrgMap {
 
 
     public static Set<Mapping> generateMissingMappings(JarInput jarInput, List<Mapping> mappings) throws IOException {
-        System.out.println("build class hierarchy");
+        LOGGER.info("build class hierarchy");
 
         ClassHierarchy classHierarchy = jarInput.getHierarchy();
 
@@ -74,12 +79,14 @@ public class ProGuardToCsrgMap {
                 MethodMapping method = (MethodMapping) mapping;
                 String obfName = classMappingMojangToObf.get(method.getOwner());
                 if (obfName == null) {
-                    System.err.println("Unknown class " + method.getOwner());
+                    if (seenUnknownClass.add(method.getOwner()))
+                        LOGGER.warn("Unknown class " + method.getOwner());
                     continue;
                 }
                 ClassNode owner = jarInput.getClass(obfName);
                 if (owner == null) {
-                    System.err.println("Missing class " + obfName);
+                    if (seenUnknownClass.add(obfName))
+                        LOGGER.warn("Missing class " + obfName);
                     continue;
                 }
 
@@ -88,19 +95,19 @@ public class ProGuardToCsrgMap {
                 for (MethodNode methodNode : owner.methods) {
                     if (methodNode.name.equals(method.getNewName())) {
                         if (methodNode.desc.equals(currentDesc)) {
-                           // System.out.println("find! " + method.getDesc() + " -> " + currentDesc);
+                            // System.out.println("find! " + method.getDesc() + " -> " + currentDesc);
                             currentMethod = methodNode;
                             break;
                         }
 
                     }
                 }
-                if (currentMethod == null){
-                  //  System.err.printf("Unknown method %s#%s%s as %s#%s%s \n", method.getOwner(), method.getOldName(), method.getDesc(), owner.name, method.getNewName(), currentDesc);
+                if (currentMethod == null) {
+                    //  System.err.printf("Unknown method %s#%s%s as %s#%s%s \n", method.getOwner(), method.getOldName(), method.getDesc(), owner.name, method.getNewName(), currentDesc);
                     // in 1.16.5 mojang obfuscator removes unused methods
                     continue;
                 }
-                if (Modifier.isStatic(currentMethod.access) || Modifier.isPrivate(currentMethod.access)){
+                if (Modifier.isStatic(currentMethod.access) || Modifier.isPrivate(currentMethod.access)) {
                     continue; // skip static anf private methods
                 }
                 for (ClassNode classNode : classHierarchy.getHierarchy().getOrDefault(obfName, Collections.emptySet())) {
@@ -118,25 +125,27 @@ public class ProGuardToCsrgMap {
                 FieldMapping fieldMapping = (FieldMapping) mapping;
                 String obfName = classMappingMojangToObf.get(fieldMapping.getOwner());
                 if (obfName == null) {
-                    System.err.println("Unknown class " + fieldMapping.getOwner());
+                    if (seenUnknownClass.add(fieldMapping.getOwner()))
+                        LOGGER.warn("Unknown class " + fieldMapping.getOwner());
                     continue;
                 }
                 ClassNode owner = jarInput.getClass(obfName);
                 if (owner == null) {
-                    System.err.println("Missing class " + obfName);
+                    if (seenUnknownClass.add(obfName))
+                        LOGGER.warn("Missing class " + obfName);
                     continue;
                 }
                 FieldNode currentFieldNode = null;
                 for (FieldNode field : owner.fields) {
-                    if (field.name.equals(fieldMapping.getNewName())){
+                    if (field.name.equals(fieldMapping.getNewName())) {
                         currentFieldNode = field;
                         break;
                     }
                 }
-                if (currentFieldNode == null){
+                if (currentFieldNode == null) {
                     break;
                 }
-                if (Modifier.isPrivate(currentFieldNode.access) || (Modifier.isStatic(currentFieldNode.access) && !Modifier.isInterface(owner.access))){
+                if (Modifier.isPrivate(currentFieldNode.access) || (Modifier.isStatic(currentFieldNode.access) && !Modifier.isInterface(owner.access))) {
                     continue;
                 }
                 for (ClassNode classNode : classHierarchy.getHierarchy().getOrDefault(obfName, Collections.emptySet())) {
@@ -151,7 +160,7 @@ public class ProGuardToCsrgMap {
                 }
             }
         }
-        System.out.println("Generated " + toAdd.size() + " missing mappings!");
+        LOGGER.info("Generated " + toAdd.size() + " missing mappings!");
         return toAdd;
     }
 
@@ -211,7 +220,7 @@ public class ProGuardToCsrgMap {
                 );
                 list.add(mapping);
             } else {
-                throw new IllegalArgumentException("Неизвестный формат! " + line);
+                throw new IllegalArgumentException("Unknown format! " + line);
             }
         }
 

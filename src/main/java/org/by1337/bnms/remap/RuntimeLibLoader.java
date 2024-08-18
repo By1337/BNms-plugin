@@ -1,5 +1,7 @@
 package org.by1337.bnms.remap;
 
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -9,7 +11,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RuntimeLibLoader implements LibLoader {
-
     private Map<String, ClassNode> classes = new HashMap<>();
 
     @Override
@@ -20,7 +21,6 @@ public class RuntimeLibLoader implements LibLoader {
             ClassLoader loader = Thread.currentThread().getContextClassLoader();
 
             if (loader == null) {
-                System.out.println(name + " " + null);
                 return null;
             }
             String className = name + ".class";

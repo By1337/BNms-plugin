@@ -376,7 +376,7 @@ public class LegacyProcess {
 
                         String old = spigotNameToPackage.put(arr[0], arr[1]);
                         if (old != null && !old.equals(arr[1])) {
-                            throw new IllegalStateException("Конфликт между " + old + "/" + arr[1] + " и " + arr[1] + "/" + arr[0]);
+                            throw new IllegalStateException("Conflict between " + old + "/" + arr[1] + " and " + arr[1] + "/" + arr[0]);
                         }
                     }
                 }

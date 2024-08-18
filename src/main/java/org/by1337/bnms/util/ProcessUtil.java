@@ -1,14 +1,23 @@
 package org.by1337.bnms.util;
 
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugin.logging.SystemStreamLog;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
 
 public class ProcessUtil {
+    private static final Log LOGGER = new SystemStreamLog();
     public static void executeCommand(File directory, String[] command) {
+        executeCommand(directory, command, () -> {});
+    }
+    public static void executeCommand(File directory, String[] command, Runnable beforeStart) {
+        beforeStart.run();
         try {
             ProcessBuilder builder = new ProcessBuilder(command);
             builder.directory(directory);
@@ -17,7 +26,9 @@ public class ProcessUtil {
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
-                System.out.println(line);
+                if (SharedConstants.DEBUG){
+                    LOGGER.info(line);
+                }
             }
             int exitCode = process.waitFor();
 

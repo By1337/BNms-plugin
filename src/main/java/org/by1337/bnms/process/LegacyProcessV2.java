@@ -42,11 +42,11 @@ public class LegacyProcessV2 {
         home.mkdirs();
         File versionCacheDir = new File(home, "versionCacheDir");
         versionCacheDir.mkdirs();
-        File work = new File(home, "work");
+        File work = new File(home, "work1.14.4");
         work.mkdirs();
         Version.load(versionCacheDir);
 
-        Version version1 = Version.getByName("1.16.5");
+        Version version1 = Version.getByName("1.14.4");
 
         LegacyProcessV2 processV2 = new LegacyProcessV2(
                 new SystemStreamLog(),
@@ -102,7 +102,8 @@ public class LegacyProcessV2 {
                             getToMojangMembersFixed(getPaperMojangClasses()).getName(),
                             "-o",
                             file.getName()
-                    }
+                    },
+                    () -> log.info("final remap")
             );
             FileUtil.createSum(file);
         }
@@ -124,7 +125,8 @@ public class LegacyProcessV2 {
                             getMojangMappings().toMojangClass.getName(),
                             "-o",
                             file.getName()
-                    }
+                    },
+                    () -> log.info("remap to mojang classes")
             );
             FileUtil.createSum(file);
         }
@@ -134,6 +136,7 @@ public class LegacyProcessV2 {
     private File getToMojangMembersFixed(File input) throws Exception {
         File file = new File(home, "toMojangMembers.csrg.fixed.csrg");
         if (!FileUtil.checkSum(file)) {
+            int count = 0;
             List<Mapping> mappings = CsrgUtil.read(getMojangMappings().toMojangMembers);
             JarInput jarInput = new JarInput(input);
             List<LibLoader> libs = new ArrayList<>();
@@ -146,9 +149,10 @@ public class LegacyProcessV2 {
                 if (mapping.getOldName().equals(mapping.getNewName())) continue;
                 if (hasConflict(jarInput, mapping)) {
                     mapping.setNewName(mapping.getNewName() + "_");
-                    System.out.println("Fixed " + mapping);
+                    count++;
                 }
             }
+            log.info("Fixed " + count + " name conflicts");
             saveMappings(mappings, file);
             FileUtil.createSum(file);
         }
@@ -223,7 +227,8 @@ public class LegacyProcessV2 {
                             getBukkitClUndo().getName(),
                             "-o",
                             file.getName()
-                    }
+                    },
+                    () -> log.info("remap to obf")
             );
             FileUtil.createSum(file);
         }
@@ -258,7 +263,8 @@ public class LegacyProcessV2 {
                             getUndoRelocateMappings().getName(),
                             "-o",
                             file.getName()
-                    }
+                    },
+                    () -> log.info("undo relocate classes")
             );
             FileUtil.createSum(file);
         }
@@ -278,7 +284,7 @@ public class LegacyProcessV2 {
 
                         String old = spigotNameToPackage.put(arr[0], arr[1]);
                         if (old != null && !old.equals(arr[1])) {
-                            throw new IllegalStateException("Конфликт между " + old + "/" + arr[1] + " и " + arr[1] + "/" + arr[0]);
+                            throw new IllegalStateException("Conflict between " + old + "/" + arr[1] + " and " + arr[1] + "/" + arr[0]);
                         }
                     }
                 }

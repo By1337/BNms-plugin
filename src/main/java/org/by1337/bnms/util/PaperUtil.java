@@ -113,7 +113,7 @@ public class PaperUtil {
             throw new IllegalStateException("Unknown version info!");
         }
         jarFile.close();
-        System.out.println(version);
+       // System.out.println(version);
 
         if (version == null) {
             throw new IllegalStateException("Failed to detect version!");
@@ -229,21 +229,5 @@ public class PaperUtil {
         }
         return null;
     }
-
-
-//    public static void main(String[] args) throws MojoExecutionException, MojoFailureException, IOException {
-//      //  System.out.println(getPackaging(new File("Q:\\cod\\new\\bnms-plugin\\MegaTest\\result.jar")));
-//        File home = new File("Q:\\cod\\new\\bnms-plugin\\MegaTest");
-//      //  System.out.println(getPackaging(new File(home, "result.jar")));
-//     //   if (true) return;
-//        PaperUtil paperUtil = new PaperUtil();
-//        paperUtil.extractServerJar(
-//                new File(home, "Server.jar"),
-//                home,
-//                new SystemStreamLog(),
-//                new File(home, "result.jar")
-//        );
-//        System.out.println(getPackaging(new File(home, "result.jar")));
-//    }
 
 }

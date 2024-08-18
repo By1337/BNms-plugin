@@ -81,7 +81,7 @@ public class Process {
         if (!FileUtil.checkSum(paper)) {
             File bukkitMembers = getBukkitMembers();
             if (Files.size(bukkitMembers.toPath()) < 50_000) {
-                // новые версиях нет таких мапингов
+                // newer versions do not have such mapping
                 // 1.18+
                 return getPatchedPaper();
             }
