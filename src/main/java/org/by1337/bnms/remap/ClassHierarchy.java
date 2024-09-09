@@ -75,7 +75,7 @@ public class ClassHierarchy {
             if (node != null) return node;
         }
         if (!seenMissingClass.contains(clazz)) {
-            SharedConstants.LOGGER.info("Missing class " + clazz);
+            SharedConstants.LOGGER.warn("Missing class " + clazz);
             seenMissingClass.add(clazz);
         }
         return null;

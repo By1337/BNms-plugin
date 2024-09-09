@@ -36,7 +36,7 @@ First, add this plugin to your `pom.xml`:
             <plugin>
                 <groupId>org.by1337.bnms</groupId>
                 <artifactId>bnms-plugin</artifactId>
-                <version>1.3</version>
+                <version>1.3.1</version>
                 <configuration>
                     <version>1.16.5</version>
                 </configuration>

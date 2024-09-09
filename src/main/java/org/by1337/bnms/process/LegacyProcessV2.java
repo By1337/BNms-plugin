@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -78,10 +77,10 @@ public class LegacyProcessV2 {
         }
         processV2.getPaperRemapped();
 
-      //  File remap = new File(home, "remap");
-      //  work.mkdirs();
-      //  processV2.remapFromBukkitToMojang(new File(remap, "V1_16_5-1.2.jar"), remap);
-      //  processV2.remapFromMojangToBukkit(new File(remap, "V1_16_5-1.2.jar-mojang.jar"), remap);
+        File remap = new File(home, "remap");
+        work.mkdirs();
+
+        processV2.remapFromMojangToBukkit(new File(remap, "V1_16_5-1.2.jar-mojang.jar"), remap);
     }
 
     public File remapFromMojangToBukkit(File input, File wordDir) throws Exception {
@@ -146,6 +145,7 @@ public class LegacyProcessV2 {
         new File(wordDir, input.getName() + "-bukkit-cl.jar").delete();
         return new File(wordDir, input.getName() + "-bukkit-mappings.jar");
     }
+
     public File remapFromBukkitToMojang(File input, File wordDir) throws Exception {
         String javaHome = ProcessUtil.getJavaHome();
         ProcessUtil.executeCommand(wordDir,
@@ -272,6 +272,7 @@ public class LegacyProcessV2 {
         }
         return file;
     }
+
     private File getToMojangMembersFixed() throws Exception {
         File file = new File(home, "toMojangMembers.csrg.fixed.csrg");
         if (!FileUtil.checkSum(file)) {
@@ -625,8 +626,7 @@ public class LegacyProcessV2 {
     }
 
     private void saveMappings(List<Mapping> mappings, File to) throws IOException {
-        List<String> strList = mappings.stream().map(Object::toString).collect(Collectors.toList());
-        Files.write(to.toPath(), Joiner.on("\n").join(strList).getBytes(StandardCharsets.UTF_8));
+        Files.write(to.toPath(), Joiner.on("\n").join(mappings).getBytes(StandardCharsets.UTF_8));
     }
 
     private String[] splitToNameAndPackage(String s) {

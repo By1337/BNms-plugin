@@ -103,7 +103,7 @@ public class ProGuardToCsrgMap {
                     // in 1.16.5 mojang obfuscator removes unused methods
                     continue;
                 }
-                if (Modifier.isStatic(currentMethod.access) || Modifier.isPrivate(currentMethod.access)) {
+                if (Modifier.isStatic(currentMethod.access)) {
                     continue; // skip static anf private methods
                 }
                 for (ClassNode classNode : classHierarchy.getHierarchy().getOrDefault(obfName, Collections.emptySet())) {
@@ -139,9 +139,9 @@ public class ProGuardToCsrgMap {
                     }
                 }
                 if (currentFieldNode == null) {
-                    break;
+                    continue;
                 }
-                if (Modifier.isPrivate(currentFieldNode.access) || (Modifier.isStatic(currentFieldNode.access) && !Modifier.isInterface(owner.access))) {
+                if ((Modifier.isStatic(currentFieldNode.access) && !Modifier.isInterface(owner.access))) {
                     continue;
                 }
                 for (ClassNode classNode : classHierarchy.getHierarchy().getOrDefault(obfName, Collections.emptySet())) {
